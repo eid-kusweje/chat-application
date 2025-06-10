@@ -19,3 +19,18 @@ class ChatClient:
         self.root.configure(bg="#2c3e50")
 
         self.setup_gui()
+
+   def setup_gui(self):
+        # Title
+        title_label = tk.Label(self.root, text="TCP Chat Client",
+                               font=("Arial", 18, "bold"),
+                               bg="#2c3e50", fg="white")
+        title_label.pack(pady=10)
+
+        # Connection frame
+        conn_frame = tk.Frame(self.root, bg="#2c3e50")
+        conn_frame.pack(pady=10)
+
+       
+       
+
