@@ -128,5 +128,48 @@ class ChatServer:
                 pass
         self.clients.clear()
 
+       # Close server socket
+        if self.server_socket:
+            self.server_socket.close()
+
+        self.start_btn.config(state="normal")
+        self.stop_btn.config(state="disabled")
+        self.status_label.config(text="Server Status: Stopped", fg="#e74c3c")
+        self.update_clients_display()
+        self.log_message("Server stopped")
+
+    def accept_clients(self):
+        while self.is_running:
+            try:
+                client_socket, address = self.server_socket.accept()
+                threading.Thread(target=self.handle_client,
+                                 args=(client_socket, address), daemon=True).start()
+            except:
+                if self.is_running:
+                    self.log_message("Error accepting client connections")
+                break
+
+    def handle_client(self, client_socket, address):
+        try:
+            # Wait for username
+            data = client_socket.recv(1024).decode('utf-8')
+            message = json.loads(data)
+
+            if message['type'] == 'join':
+                username = message['username']
+                self.clients[client_socket] = {'username': username, 'address': address}
+
+                self.log_message(f"{username} joined from {address}")
+                self.update_clients_display()
+
+                # Notify all clients about new user
+                self.broadcast_message({
+                    'type': 'system',
+                    'message': f"{username} joined the chat",
+                    'timestamp': datetime.now().strftime("%H:%M:%S")
+                }, exclude=client_socket)
+
+       
+
 
 
