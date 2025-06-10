@@ -81,3 +81,34 @@ class ChatServer:
         self.port_entry.insert(0, "12345")
         self.port_entry.grid(row=0, column=3, padx=5)
 
+        # Server message input
+        input_frame = tk.Frame(self.root, bg="#2c3e50")
+        input_frame.pack(fill="x", padx=10, pady=(0, 10))
+
+        tk.Label(input_frame, text="Server Message:", bg="#2c3e50", fg="white").pack(side="left")
+        self.server_msg_entry = tk.Entry(input_frame, font=("Arial", 10))
+        self.server_msg_entry.pack(side="left", fill="x", expand=True, padx=5)
+        self.server_msg_entry.bind("<Return>", self.send_server_message)
+
+        send_btn = tk.Button(input_frame, text="Send", command=self.send_server_message,
+                             bg="#3498db", fg="white", font=("Arial", 10, "bold"))
+        send_btn.pack(side="right")
+
+    def start_server(self):
+        try:
+            host = self.host_entry.get() or "localhost"
+            port = int(self.port_entry.get())
+
+            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server_socket.bind((host, port))
+            self.server_socket.listen(5)
+
+            self.is_running = True
+            self.start_btn.config(state="disabled")
+            self.stop_btn.config(state="normal")
+            self.status_label.config(text=f"Server Status: Running on {host}:{port}", fg="#27ae60")
+
+            self.log_message(f"Server started on {host}:{port}")
+
+
