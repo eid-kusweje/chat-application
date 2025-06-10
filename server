@@ -4,3 +4,17 @@ import socket
 import threading
 import json
 from datetime import datetime
+
+class ChatServer:
+    def __init__(self):
+        self.clients = {}  # {socket: {'username': str, 'address': tuple}}
+        self.server_socket = None
+        self.is_running = False
+
+        # GUI Setup
+        self.root = tk.Tk()
+        self.root.title("TCP Chat Server")
+        self.root.geometry("600x500")
+        self.root.configure(bg="#2c3e50")
+
+        self.setup_gui()
