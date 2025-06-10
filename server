@@ -111,4 +111,22 @@ class ChatServer:
 
             self.log_message(f"Server started on {host}:{port}")
 
+            # Start accepting clients in a separate thread
+            threading.Thread(target=self.accept_clients, daemon=True).start()
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to start server: {e}")
+
+    def stop_server(self):
+        self.is_running = False
+
+        # Close all client connections
+        for client_socket in list(self.clients.keys()):
+            try:
+                client_socket.close()
+            except:
+                pass
+        self.clients.clear()
+
+
 
