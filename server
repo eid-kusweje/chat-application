@@ -36,6 +36,46 @@ class ChatServer:
         self.host_entry.insert(0, "localhost")
         self.host_entry.grid(row=0, column=1, padx=5)
 
+        # Start/Stop buttons
+        self.start_btn = tk.Button(control_frame, text="Start Server",
+                                   command=self.start_server, bg="#27ae60", fg="white",
+                                   font=("Arial", 10, "bold"))
+        self.start_btn.grid(row=0, column=4, padx=10)
+
+        self.stop_btn = tk.Button(control_frame, text="Stop Server",
+                                  command=self.stop_server, bg="#e74c3c", fg="white",
+                                  font=("Arial", 10, "bold"), state="disabled")
+        self.stop_btn.grid(row=0, column=5, padx=5)
+
+        # Status label
+        self.status_label = tk.Label(self.root, text="Server Status: Stopped",
+                                     bg="#2c3e50", fg="#e74c3c", font=("Arial", 12))
+        self.status_label.pack(pady=5)
+
+        # Main content frame
+        main_frame = tk.Frame(self.root, bg="#2c3e50")
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Connected clients section
+        clients_frame = tk.LabelFrame(main_frame, text="Connected Clients",
+                                      bg="#34495e", fg="white", font=("Arial", 10, "bold"))
+        clients_frame.pack(fill="x", pady=(0, 10))
+
+        self.clients_listbox = tk.Listbox(clients_frame, height=4, bg="#ecf0f1",
+                                          font=("Arial", 9))
+        self.clients_listbox.pack(fill="x", padx=5, pady=5)
+
+        # Chat messages section
+        messages_frame = tk.LabelFrame(main_frame, text="Chat Messages",
+                                       bg="#34495e", fg="white", font=("Arial", 10, "bold"))
+        messages_frame.pack(fill="both", expand=True)
+
+        self.messages_text = scrolledtext.ScrolledText(messages_frame, height=15,
+                                                       bg="#ecf0f1", font=("Arial", 9),
+                                                       state="disabled")
+        self.messages_text.pack(fill="both", expand=True, padx=5, pady=5)
+
+
         tk.Label(control_frame, text="Port:", bg="#2c3e50", fg="white").grid(row=0, column=2, padx=5)
         self.port_entry = tk.Entry(control_frame, width=10)
         self.port_entry.insert(0, "12345")
