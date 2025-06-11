@@ -116,7 +116,40 @@ class ChatClient:
         tk.Label(self.private_frame, text="💡 Enter the username of the recipient",
                  bg="#34495e", fg="#bdc3c7", font=("Arial", 9, "italic")).pack(side="left")
 
-       
+       # Message input frame
+        input_frame = tk.LabelFrame(self.root, text="Send Message",
+                                    bg="#34495e", fg="white", font=("Arial", 12, "bold"))
+        input_frame.pack(fill="x", padx=10, pady=(0, 10))
+
+        # Message input area
+        msg_input_frame = tk.Frame(input_frame, bg="#34495e")
+        msg_input_frame.pack(fill="x", padx=10, pady=10)
+
+        self.message_status_label = tk.Label(msg_input_frame, text="💬 Type your public message:",
+                                             bg="#34495e", fg="white", font=("Arial", 10))
+        self.message_status_label.pack(anchor="w")
+
+        # Message input
+        self.message_entry = tk.Entry(msg_input_frame, font=("Arial", 12),
+                                      state="disabled", bg="#ecf0f1",
+                                      relief="solid", bd=2)
+        self.message_entry.pack(fill="x", pady=(5, 5))
+        self.message_entry.bind("<Return>", self.send_message)
+
+        # Instructions
+        self.instruction_label = tk.Label(msg_input_frame,
+                                          text="💡 Press Enter to send message or click the button below",
+                                          bg="#34495e", fg="#bdc3c7", font=("Arial", 9, "italic"))
+        self.instruction_label.pack(anchor="w", pady=(0, 5))
+
+        # Send button
+        self.send_btn = tk.Button(msg_input_frame, text="📤 SEND MESSAGE",
+                                  command=self.send_message,
+                                  bg="#27ae60", fg="white",
+                                  font=("Arial", 12, "bold"),
+                                  state="disabled", height=2)
+        self.send_btn.pack(fill="x")
+
 
 
        
