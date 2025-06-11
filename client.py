@@ -82,6 +82,42 @@ class ChatClient:
         self.chat_display.tag_configure("private_received", foreground="#d35400", font=("Arial", 10, "bold"))
         self.chat_display.tag_configure("timestamp", foreground="#95a5a6", font=("Arial", 8))
 
+       # Message type selection frame
+        msg_type_frame = tk.LabelFrame(self.root, text="Message Type",
+                                       bg="#34495e", fg="white", font=("Arial", 11, "bold"))
+        msg_type_frame.pack(fill="x", padx=10, pady=(0, 5))
+
+        type_selection_frame = tk.Frame(msg_type_frame, bg="#34495e")
+        type_selection_frame.pack(fill="x", padx=10, pady=5)
+
+        self.message_type = tk.StringVar(value="public")
+
+        public_radio = tk.Radiobutton(type_selection_frame, text="📢 Public (All Users)",
+                                      variable=self.message_type, value="public",
+                                      bg="#34495e", fg="white", selectcolor="#2c3e50",
+                                      font=("Arial", 10), command=self.on_message_type_change)
+        public_radio.pack(side="left", padx=(0, 20))
+
+        private_radio = tk.Radiobutton(type_selection_frame, text="🔒 Private Message",
+                                       variable=self.message_type, value="private",
+                                       bg="#34495e", fg="white", selectcolor="#2c3e50",
+                                       font=("Arial", 10), command=self.on_message_type_change)
+        private_radio.pack(side="left")
+
+        # Private message target frame (initially hidden)
+        self.private_frame = tk.Frame(msg_type_frame, bg="#34495e")
+
+        tk.Label(self.private_frame, text="To:", bg="#34495e", fg="white",
+                 font=("Arial", 10)).pack(side="left", padx=(10, 5))
+
+        self.target_entry = tk.Entry(self.private_frame, width=20, font=("Arial", 10))
+        self.target_entry.pack(side="left", padx=(0, 10))
+
+        tk.Label(self.private_frame, text="💡 Enter the username of the recipient",
+                 bg="#34495e", fg="#bdc3c7", font=("Arial", 9, "italic")).pack(side="left")
+
+       
+
 
        
        
