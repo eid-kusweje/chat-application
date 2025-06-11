@@ -198,6 +198,62 @@ class ChatServer:
             self.log_message(f"{username} disconnected")
             self.update_clients_display()
 
+             # Notify remaining clients
+            self.broadcast_message({
+                'type': 'system',
+                'message': f"{username} left the chat",
+                'timestamp': datetime.now().strftime("%H:%M:%S")
+            })
+
+        try:
+            client_socket.close()
+        except:
+            pass
+
+    def broadcast_message(self, message, exclude=None):
+        message_data = json.dumps(message).encode('utf-8')
+
+        for client_socket in list(self.clients.keys()):
+            if client_socket != exclude:
+                try:
+                    client_socket.send(message_data)
+                except:
+                    self.disconnect_client(client_socket)
+
+    def send_server_message(self, event=None):
+        message = self.server_msg_entry.get().strip()
+        if message:
+            self.log_message(f"[SERVER]: {message}")
+            self.broadcast_message({
+                'type': 'server',
+                'message': message,
+                'timestamp': datetime.now().strftime("%H:%M:%S")
+            })
+            self.server_msg_entry.delete(0, 'end')
+
+    def update_clients_display(self):
+        self.clients_listbox.delete(0, 'end')
+        for client_info in self.clients.values():
+            self.clients_listbox.insert('end',
+                                        f"{client_info['username']} - {client_info['address'][0]}:{client_info['address'][1]}")
+
+    def log_message(self, message):
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.messages_text.config(state="normal")
+        self.messages_text.insert('end', f"[{timestamp}] {message}\n")
+        self.messages_text.config(state="disabled")
+        self.messages_text.see('end')
+
+    def run(self):
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.mainloop()
+
+    def on_closing(self):
+        if self.is_running:
+            self.stop_server()
+        self.root.destroy()
+
+
 
        
 
