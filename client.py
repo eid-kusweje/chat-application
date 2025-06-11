@@ -150,6 +150,220 @@ class ChatClient:
                                   state="disabled", height=2)
         self.send_btn.pack(fill="x")
 
+        # Welcome message
+        self.display_message("Welcome to TCP Chat Client!", "system")
+        self.display_message("Enter server details and username, then click Connect.", "system")
+        self.display_message("You can send public messages to all users or private messages to specific users.",
+                             "system")
+        self.display_message("For private messages, select 'Private Message' and enter the recipient's username.",
+                             "system")
+
+    def on_message_type_change(self):
+        """Handle message type change between public and private"""
+        if self.message_type.get() == "public":
+            self.message_status_label.config(text="💬 Type your public message:")
+            self.send_btn.config(text="📤 SEND TO ALL", bg="#27ae60")
+            self.instruction_label.config(text="💡 Message will be sent to all connected users")
+            self.private_frame.pack_forget()
+        else:
+            self.message_status_label.config(text="🔒 Type your private message:")
+            self.send_btn.config(text="📤 SEND PRIVATE", bg="#8e44ad")
+            self.instruction_label.config(text="💡 Message will be sent privately to the specified user")
+            self.private_frame.pack(fill="x", pady=(5, 0))
+
+    def connect_to_server(self):
+        try:
+            host = self.host_entry.get().strip() or "localhost"
+            port = int(self.port_entry.get().strip() or "12345")
+            username = self.username_entry.get().strip()
+
+            if not username:
+                messagebox.showerror("Error", "Please enter a username")
+                return
+
+            # Create socket and connect
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((host, port))
+
+            # Send join message
+            join_message = json.dumps({
+                'type': 'join',
+                'username': username
+            })
+            self.client_socket.send(join_message.encode('utf-8'))
+
+            self.connected = True
+            self.username = username
+
+            # Update GUI
+            self.connect_btn.config(state="disabled")
+            self.disconnect_btn.config(state="normal")
+            self.message_entry.config(state="normal")
+            self.send_btn.config(state="normal")
+            self.target_entry.config(state="normal")
+            self.status_label.config(text=f"Status: Connected as {username}", fg="#27ae60")
+
+            # Disable connection inputs
+            self.host_entry.config(state="disabled")
+            self.port_entry.config(state="disabled")
+            self.username_entry.config(state="disabled")
+
+            self.display_message(f"Connected to server at {host}:{port}", "system")
+
+            # Start listening for messages
+            threading.Thread(target=self.listen_for_messages, daemon=True).start()
+
+        except ConnectionRefusedError:
+            messagebox.showerror("Connection Error", "Could not connect to server. Make sure the server is running.")
+        except ValueError:
+            messagebox.showerror("Input Error", "Please enter a valid port number")
+        except Exception as e:
+            messagebox.showerror("Error", f"Connection failed: {e}")
+
+    def disconnect_from_server(self):
+        self.connected = False
+
+        if self.client_socket:
+            try:
+                self.client_socket.close()
+            except:
+                pass
+            self.client_socket = None
+
+        # Update GUI
+        self.connect_btn.config(state="normal")
+        self.disconnect_btn.config(state="disabled")
+        self.message_entry.config(state="disabled")
+        self.send_btn.config(state="disabled")
+        self.target_entry.config(state="disabled")
+        self.status_label.config(text="Status: Disconnected", fg="#e74c3c")
+
+        # Enable connection inputs
+        self.host_entry.config(state="normal")
+        self.port_entry.config(state="normal")
+        self.username_entry.config(state="normal")
+
+        self.display_message("Disconnected from server", "system")
+
+    def listen_for_messages(self):
+        while self.connected:
+            try:
+                data = self.client_socket.recv(1024).decode('utf-8')
+                if not data:
+                    break
+
+                # Debug: Print what we received
+                print(f"Received: {data}")
+
+                message = json.loads(data)
+
+                if message['type'] == 'message':
+                    # Public message from another user
+                    if message['username'] != self.username:
+                        self.display_message(
+                            f"{message['username']}: {message['content']}",
+                            "other",
+                            message['timestamp']
+                        )
+
+                elif message['type'] == 'private_message':
+                    # Private message received
+                    self.display_message(
+                        f"🔒 Private from {message['sender']}: {message['content']}",
+                        "private_received",
+                        message['timestamp']
+                    )
+
+                elif message['type'] == 'private_confirmation':
+                    # Confirmation that private message was sent
+                    if message.get('delivered', False):
+                        self.display_message(
+                            f"🔒 Private to {message['target']}: {message['content']}",
+                            "private_sent",
+                            message['timestamp']
+                        )
+                    else:
+                        self.display_message(
+                            f"❌ Failed to deliver private message to {message['target']}: {message.get('reason', 'User not found')}",
+                            "system",
+                            message['timestamp']
+                        )
+
+                elif message['type'] == 'error':
+                    # Server error message
+                    self.display_message(f"❌ Server Error: {message.get('message', 'Unknown error')}", "system")
+
+                elif message['type'] == 'system':
+                    self.display_message(message['message'], "system", message['timestamp'])
+
+                elif message['type'] == 'server':
+                    self.display_message(f"[SERVER]: {message['message']}", "server", message['timestamp'])
+
+                else:
+                    # Unknown message type - for debugging
+                    print(f"Unknown message type: {message}")
+                    self.display_message(f"Unknown message type: {message['type']}", "system")
+
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}")
+                self.display_message("Received invalid message format", "system")
+            except Exception as e:
+                print(f"Listen error: {e}")
+                if self.connected:
+                    self.display_message("Connection lost", "system")
+                    self.disconnect_from_server()
+                break
+
+    def send_message(self, event=None):
+        """Send message based on selected type (public or private)"""
+        if not self.connected:
+            messagebox.showwarning("Not Connected", "Please connect to server first!")
+            return
+
+        message = self.message_entry.get().strip()
+        if not message:
+            return
+
+        try:
+            if self.message_type.get() == "public":
+                # Send public message
+                message_data = json.dumps({
+                    'type': 'message',
+                    'content': message
+                })
+                self.client_socket.send(message_data.encode('utf-8'))
+
+                # Display own public message
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                self.display_message(f"You: {message}", "own", timestamp)
+
+            else:  # private message
+                target_user = self.target_entry.get().strip()
+                if not target_user:
+                    messagebox.showwarning("Missing Recipient", "Please enter the username of the recipient!")
+                    self.target_entry.focus()
+                    return
+
+                if target_user == self.username:
+                    messagebox.showwarning("Invalid Target", "You cannot send a private message to yourself!")
+                    return
+
+                # Send private message
+                message_data = json.dumps({
+                    'type': 'private_message',
+                    'target': target_user,
+                    'content': message
+                })
+
+                # Debug: Show what we're sending
+                print(f"Sending private message: {message_data}")
+                self.display_message(f"🔄 Sending private message to {target_user}...", "system")
+
+                self.client_socket.send(message_data.encode('utf-8'))
+
+
+       
+
 
 
        
