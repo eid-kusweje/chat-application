@@ -169,6 +169,36 @@ class ChatServer:
                     'timestamp': datetime.now().strftime("%H:%M:%S")
                 }, exclude=client_socket)
 
+                # Handle client messages
+                while self.is_running:
+                    data = client_socket.recv(1024).decode('utf-8')
+                    if not data:
+                        break
+
+                    message = json.loads(data)
+                    if message['type'] == 'message':
+                        self.log_message(f"{username}: {message['content']}")
+                        self.broadcast_message({
+                            'type': 'message',
+                            'username': username,
+                            'content': message['content'],
+                            'timestamp': datetime.now().strftime("%H:%M:%S")
+                        })
+
+        except Exception as e:
+            pass
+        finally:
+            self.disconnect_client(client_socket)
+
+    def disconnect_client(self, client_socket):
+        if client_socket in self.clients:
+            username = self.clients[client_socket]['username']
+            del self.clients[client_socket]
+
+            self.log_message(f"{username} disconnected")
+            self.update_clients_display()
+
+
        
 
 
