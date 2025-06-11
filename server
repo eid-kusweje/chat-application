@@ -254,6 +254,11 @@ class ChatServer:
         self.root.destroy()
 
 
+if __name__ == "__main__":
+    server = ChatServer()
+    server.run()
+
+
 
        
 
