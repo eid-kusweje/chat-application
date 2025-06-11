@@ -361,6 +361,35 @@ class ChatClient:
 
                 self.client_socket.send(message_data.encode('utf-8'))
 
+               # Note: We'll get a confirmation from server if message is delivered
+
+            self.message_entry.delete(0, 'end')
+            self.message_entry.focus()
+
+        except Exception as e:
+            self.display_message(f"Failed to send message: {str(e)}", "system")
+            messagebox.showerror("Send Error", f"Could not send message: {e}")
+            print(f"Send error: {e}")
+
+    def display_message(self, message, msg_type="normal", timestamp=None):
+        self.chat_display.config(state="normal")
+
+        if timestamp:
+            self.chat_display.insert('end', f"[{timestamp}] ", "timestamp")
+
+        self.chat_display.insert('end', f"{message}\n", msg_type)
+        self.chat_display.config(state="disabled")
+        self.chat_display.see('end')
+
+    def run(self):
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.mainloop()
+
+    def on_closing(self):
+        if self.connected:
+            self.disconnect_from_server()
+        self.root.destroy()
+
 
        
 
